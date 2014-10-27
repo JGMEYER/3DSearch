@@ -21,9 +21,9 @@ var VIEW_ANGLE = 45,
     NEAR = 0.1,
     FAR = 10000;
 
-var CLOUD_COUNT = 5,
+var CLOUD_COUNT = 4,
     MAX_CLOUD_RADIUS = 900/2,
-    NODES_PER_SQ_UNIT = 0.0006; // affects node density
+    NODES_PER_SQ_UNIT = 0.0007; // affects node density
 
 // scene variables
 var container, renderer, camera, scene, controls;
@@ -93,40 +93,37 @@ function init() {
     var centerNodeSphere = new THREE.Mesh(nodeGeometry, nodeMaterial);
     scene.add(centerNodeSphere);
 
-    // generate node clouds
+    // generate clouds of equally spaced nodes
     for (var c = 1; c <= CLOUD_COUNT; c++) {
-        var cloudRadius = c * (MAX_CLOUD_RADIUS/CLOUD_COUNT);
-
-        var cloudSA = 4 * Math.PI * Math.pow(cloudRadius, 2),
+        var cloudRadius = c * (MAX_CLOUD_RADIUS/CLOUD_COUNT),
+            cloudSA = 4 * Math.PI * Math.pow(cloudRadius, 2),
             nodeCount = cloudSA * NODES_PER_SQ_UNIT;
 
-        console.log(nodeCount);
+        var inc = Math.PI * (3.0 - Math.sqrt(5)),
+            off = 2.0 / nodeCount;
 
-        for (var i = 0; i < nodeCount; i++) {
-            var x = -1 + Math.random() * 2,
-                y = -1 + Math.random() * 2,
-                z = -1 + Math.random() * 2,
-                d = 1 / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+        for (var n = 0; n <= nodeCount; n++) {
+            var y = n * off - 1.0 + (off / 2.0),
+                r = Math.sqrt(1 - y * y),
+                phi = n * inc;
 
-            x *= d;
-            y *= d;
-            z *= d;
+            var x = Math.cos(phi) * r,
+                z = Math.sin(phi) * r;
 
             x *= cloudRadius;
             y *= cloudRadius;
             z *= cloudRadius;
 
             var nodeSphere = new THREE.Mesh(nodeGeometry, nodeMaterial);
-
             nodeSphere.position.set(x, y, z);
-            lineGeometry.vertices.push(new THREE.Vector3(x, y, z));
-
             scene.add(nodeSphere);
+
+            //lineGeometry.vertices.push(new THREE.Vector3(x, y, z));
         }
     }
 
     var line = new THREE.Line(lineGeometry, lineMaterial);
-    //scene.add(line);
+    scene.add(line);
 
     window.addEventListener('resize', onWindowResize, false);
     render();
