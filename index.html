@@ -21,9 +21,9 @@ var VIEW_ANGLE = 45,
     NEAR = 0.1,
     FAR = 10000;
 
-var CLOUD_COUNT = 4,
+var CLOUD_COUNT = 3,
     MAX_CLOUD_RADIUS = 900/2,
-    NODES_PER_SQ_UNIT = 0.0007; // affects node density
+    NODES_PER_SQ_UNIT = 0.0003; // affects node density
 
 // scene variables
 var container, renderer, camera, scene, controls;
@@ -73,7 +73,6 @@ function init() {
 
     // create a point light
     var pointLight = new THREE.PointLight(0xFFFFFF);
-    pointLight.position.set(10, 50, 130);
     scene.add(pointLight);
 
     // create ambient light
@@ -93,13 +92,14 @@ function init() {
     var centerNodeSphere = new THREE.Mesh(nodeGeometry, nodeMaterial);
     scene.add(centerNodeSphere);
 
+    var nodes = new Array();
+    var inc = Math.PI * (3.0 - Math.sqrt(5));
+
     // generate clouds of equally spaced nodes
     for (var c = 1; c <= CLOUD_COUNT; c++) {
         var cloudRadius = c * (MAX_CLOUD_RADIUS/CLOUD_COUNT),
             cloudSA = 4 * Math.PI * Math.pow(cloudRadius, 2),
-            nodeCount = cloudSA * NODES_PER_SQ_UNIT;
-
-        var inc = Math.PI * (3.0 - Math.sqrt(5)),
+            nodeCount = cloudSA * NODES_PER_SQ_UNIT,
             off = 2.0 / nodeCount;
 
         for (var n = 0; n <= nodeCount; n++) {
@@ -118,6 +118,43 @@ function init() {
             nodeSphere.position.set(x, y, z);
             scene.add(nodeSphere);
 
+            var x1 = nodeSphere.position.x,
+                y1 = nodeSphere.position.y,
+                z1 = nodeSphere.position.z;
+
+            var neighbors = new Array();
+
+            for (var i = 0; i < nodes.length; i++) {
+                var x2 = nodes[i].position.x,
+                    y2 = nodes[i].position.y,
+                    z2 = nodes[i].position.z;
+
+                var dist = Math.sqrt(Math.pow(x1 - x2, 2) +
+                                     Math.pow(y1 - y2, 2) +
+                                     Math.pow(z1 - z2, 2));
+
+                if (dist <= 80) {
+                    neighbors.push(nodes[i]);
+                }
+            }
+
+            var edgeCount = neighbors.length; //Math.round(Math.random() * neighbors.length);
+            console.log(edgeCount);
+
+            for (var i = 0; i < edgeCount; i++) {
+                var x2 = neighbors[i].position.x,
+                    y2 = neighbors[i].position.y,
+                    z2 = neighbors[i].position.z;
+
+                var lineGeo= new THREE.Geometry();
+                lineGeo.vertices.push(new THREE.Vector3(x1, y1, z1));
+                lineGeo.vertices.push(new THREE.Vector3(x2, y2, z2));
+
+                var line = new THREE.Line(lineGeo, lineMaterial);
+                scene.add(line);
+            }
+
+            nodes.push(nodeSphere);
             //lineGeometry.vertices.push(new THREE.Vector3(x, y, z));
         }
     }
